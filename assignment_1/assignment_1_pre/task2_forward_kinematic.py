@@ -48,11 +48,12 @@ def part1_show_T_pose(viewer, joint_names, joint_parents, joint_offsets):
     viewer.run()
 
 
-def part2_forward_kinametic(viewer, joint_names, joint_parents, joint_offsets, joint_positions, joint_rotations, show_animation=False):
+def part2_forward_kinametic(viewer, joint_names, joint_parents, joint_offsets, joint_positions, joint_rotations,
+                            show_animation=False):
     '''
     A function to calculate the global joint positions and orientations by FK
     F: Frame number;  J: Joint number
-   
+
     joint_names:    Shape - (J)     a list to store the name of each joit
     joint_parents:  Shape - (J)     a list to store the parent index of each joint, -1 means no parent
     joint_offsets:  Shape - (J, 1, 3)  an array to store the local offset to the parent joint
@@ -89,7 +90,7 @@ def part2_forward_kinametic(viewer, joint_names, joint_parents, joint_offsets, j
             2. Then R.apply() can apply this rotation to any vector
                like: rotated_offset = r1.apply(vector)
             3. new_joint_position = parent_joint_position + parent_joint_rotation.apply(rotated_offset)
-               
+
     '''
     ########## Code Start ############
     for frame_idx in range(frame_number):
