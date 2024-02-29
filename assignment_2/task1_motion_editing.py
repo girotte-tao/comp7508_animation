@@ -41,11 +41,28 @@ def interpolation(left_data, right_data, t, method='linear', return_first_key=Tr
     '''
     ########## Code Start ############
     if method == 'linear':
-        
+        for i in range(1, t):
+            data_between = left_data + (right_data - left_data) * (i / t)
+            res.append(data_between)
         
         return res
     elif method == 'slerp':
-        
+        num_joints, dim = left_data.shape
+        if dim == 4:  # Assuming quaternion data
+            interpolated_quats = np.empty((t-1, num_joints, 4))  # Skip the last frame
+            for joint_idx in range(num_joints):
+                q1 = left_data[joint_idx]
+                q2 = right_data[joint_idx]
+                key_rots = R.from_quat([q1, q2])
+                key_times = [0, 1]
+                slerp = Slerp(key_times, key_rots)
+                new_key_frames = np.linspace(0, 1, t, endpoint=False)[1:]  # Exclude the last frame
+                interp_rots = slerp(new_key_frames)
+                interpolated_quats[:, joint_idx, :] = interp_rots.as_quat()
+            for i in range(t-1):
+                res.append(interpolated_quats[i])
+        else:
+            raise ValueError("Slerp interpolation requires quaternion data with shape (num_joints, 4).")
         
         return res
     ########## Code End ############
@@ -129,13 +146,13 @@ def concatenate_two_motions(motion1, motion2, last_frame_index, start_frame_indx
     '''
     
     ########## Code Start ############
-    # search_win1 = 
-    # search_win2 = 
+    # search_win1 =
+    # search_win2 =
     
-    # sim_matrix = 
-    # min_idx = 
+    # sim_matrix =
+    # min_idx =
     # i, j = min_idx // dtw.shape[1], min_idx % dtw.shape[1]
-    # real_i, real_j = 
+    # real_i, real_j =
     
     # motion2.local_joint_positions = motion2.local_joint_positions - ?
     
