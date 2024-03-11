@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.spatial.distance import cdist
 from scipy.spatial.transform import Rotation as R
 from scipy.spatial.transform import Slerp
 
@@ -17,6 +18,8 @@ Return: An array for the betweening data,
         if return_first_key=True, then including the known left one, 
         for example, if t=9, then the result should be 9 frames including the left one
 '''
+
+
 def interpolation(left_data, right_data, t, method='linear', return_first_key=True):
     res = [left_data] if return_first_key else []
     '''
@@ -44,12 +47,12 @@ def interpolation(left_data, right_data, t, method='linear', return_first_key=Tr
         for i in range(1, t):
             data_between = left_data + (right_data - left_data) * (i / t)
             res.append(data_between)
-        
+
         return res
     elif method == 'slerp':
         num_joints, dim = left_data.shape
         if dim == 4:  # Assuming quaternion data
-            interpolated_quats = np.empty((t-1, num_joints, 4))  # Skip the last frame
+            interpolated_quats = np.empty((t - 1, num_joints, 4))  # Skip the last frame
             for joint_idx in range(num_joints):
                 q1 = left_data[joint_idx]
                 q2 = right_data[joint_idx]
@@ -59,42 +62,44 @@ def interpolation(left_data, right_data, t, method='linear', return_first_key=Tr
                 new_key_frames = np.linspace(0, 1, t, endpoint=False)[1:]  # Exclude the last frame
                 interp_rots = slerp(new_key_frames)
                 interpolated_quats[:, joint_idx, :] = interp_rots.as_quat()
-            for i in range(t-1):
+            for i in range(t - 1):
                 res.append(interpolated_quats[i])
         else:
             raise ValueError("Slerp interpolation requires quaternion data with shape (num_joints, 4).")
-        
+
         return res
     ########## Code End ############
 
+
 def part1_key_framing(viewer, time_step, target_step):
     motion = BVHMotion('data/motion_walking.bvh')
-        
+
     motio_length = motion.local_joint_positions.shape[0]
     keyframes = np.arange(0, motio_length, time_step)
-    
+
     new_motion_local_positions, new_motion_local_rotations = [], []
-    
+
     previous_frame_idx = 0
     for current_frame_idx in keyframes[1:]:
-        between_local_pos = interpolation(motion.local_joint_positions[previous_frame_idx], 
-                                          motion.local_joint_positions[current_frame_idx], 
+        between_local_pos = interpolation(motion.local_joint_positions[previous_frame_idx],
+                                          motion.local_joint_positions[current_frame_idx],
                                           target_step - 1, 'linear')
-        between_local_rot = interpolation(motion.local_joint_rotations[previous_frame_idx], 
-                                          motion.local_joint_rotations[current_frame_idx], 
+        between_local_rot = interpolation(motion.local_joint_rotations[previous_frame_idx],
+                                          motion.local_joint_rotations[current_frame_idx],
                                           target_step - 1, 'slerp')
         new_motion_local_positions.append(between_local_pos)
         new_motion_local_rotations.append(between_local_rot)
         previous_frame_idx = current_frame_idx
-    
+
     res_motion = motion.raw_copy()
     res_motion.local_joint_positions = np.concatenate(new_motion_local_positions)
     res_motion.local_joint_rotations = np.concatenate(new_motion_local_rotations)
-    
+
     translation, orientation = res_motion.batch_forward_kinematics()
     task = ShowBVHUpdate(viewer, res_motion.joint_name, translation, orientation)
     viewer.addTask(task.update)
-    
+
+
 '''
 Combine two different motions into one motion
 Parameters:
@@ -106,7 +111,10 @@ Parameters:
     - searching_frames: the number of frames for searching the closest frame
     - method: the interpolation method, 'interpolation' or 'inertialization'
 '''
-def concatenate_two_motions(motion1, motion2, last_frame_index, start_frame_indx, between_frames, searching_frames=20, method='interpolation'):
+
+
+def concatenate_two_motions(motion1, motion2, last_frame_index, start_frame_indx, between_frames, searching_frames=20,
+                            method='interpolation'):
     '''
     TODO: Implement following functions
     Hints:
@@ -144,54 +152,65 @@ def concatenate_two_motions(motion1, motion2, last_frame_index, start_frame_indx
             plt.imshow(dtw)
             plt.show() # You can use plt.savefig('dtw.png') to save the image
     '''
-    
+
     ########## Code Start ############
-    # search_win1 =
-    # search_win2 =
-    
-    # sim_matrix =
-    # min_idx =
-    # i, j = min_idx // dtw.shape[1], min_idx % dtw.shape[1]
-    # real_i, real_j =
-    
-    # motion2.local_joint_positions = motion2.local_joint_positions - ?
-    
-    # between_local_pos = interpolation(?, ?, between_frames, 'linear')
-    # between_local_rot = interpolation(?, ?, between_frames, 'slerp')
-    
+
+    search_win1 = motion1.local_joint_rotations[last_frame_index - searching_frames:last_frame_index + searching_frames]
+    search_win2 = motion2.local_joint_rotations[
+                  max(0, start_frame_indx - searching_frames):start_frame_indx + searching_frames]
+
+    diff = search_win1[:, np.newaxis, :, :] - search_win2[np.newaxis, :, :, :]
+    sim_matrix = np.linalg.norm(diff, axis=-1)
+
+    min_idx = np.argmin(sim_matrix)
+
+    i, j = min_idx // sim_matrix.shape[1], min_idx % sim_matrix.shape[1]
+
+    real_i = last_frame_index - searching_frames + i
+    real_j = max(0, start_frame_indx - searching_frames) + j
+
+    motion2.local_joint_positions = motion2.local_joint_positions - motion2.local_joint_positions[real_j] + \
+                                    motion1.local_joint_positions[real_i]
+
+    between_local_pos = interpolation(motion1.local_joint_positions[real_i], motion2.local_joint_positions[real_j],
+                                      between_frames, 'linear')
+    between_local_rot = interpolation(motion1.local_joint_rotations[real_i], motion2.local_joint_rotations[real_j],
+                                      between_frames, 'slerp')
+
     ########## Code End ############
-    
+
     res = motion1.raw_copy()
     res.local_joint_positions = np.concatenate([motion1.local_joint_positions[:real_i],
                                                 between_local_pos,
-                                                motion2.local_joint_positions[real_j:]], 
-                                                axis=0)
+                                                motion2.local_joint_positions[real_j:]],
+                                               axis=0)
     res.local_joint_rotations = np.concatenate([motion1.local_joint_rotations[:real_i],
-                                                    between_local_rot, 
-                                                    motion2.local_joint_rotations[real_j:]], 
-                                                    axis=0)
+                                                between_local_rot,
+                                                motion2.local_joint_rotations[real_j:]],
+                                               axis=0)
     return res
 
-        
+
 def part2_concatenate(viewer, between_frames, do_interp=True):
     walk_forward = BVHMotion('data/motion_walking.bvh')
     run_forward = BVHMotion('data/motion_running.bvh')
     run_forward.adjust_joint_name(walk_forward.joint_name)
-    
+
     last_frame_index = 40
     start_frame_indx = 0
-    
+
     if do_interp:
-        motion = concatenate_two_motions(walk_forward, run_forward, last_frame_index, start_frame_indx, between_frames, method='interpolation')
+        motion = concatenate_two_motions(walk_forward, run_forward, last_frame_index, start_frame_indx, between_frames,
+                                         method='interpolation')
     else:
         motion = walk_forward.raw_copy()
         motion.local_joint_positions = np.concatenate([walk_forward.local_joint_positions[:last_frame_index],
-                                                       run_forward.local_joint_positions[start_frame_indx:]], 
-                                                       axis=0)
+                                                       run_forward.local_joint_positions[start_frame_indx:]],
+                                                      axis=0)
         motion.local_joint_rotations = np.concatenate([walk_forward.local_joint_rotations[:last_frame_index],
-                                                        run_forward.local_joint_rotations[start_frame_indx:]], 
-                                                        axis=0)         
-    
+                                                       run_forward.local_joint_rotations[start_frame_indx:]],
+                                                      axis=0)
+
     translation, orientation = motion.batch_forward_kinematics()
     task = ShowBVHUpdate(viewer, motion.joint_name, translation, orientation)
     viewer.addTask(task.update)
@@ -199,14 +218,14 @@ def part2_concatenate(viewer, between_frames, do_interp=True):
 
 
 def main():
-    viewer = SimpleViewer()  
-   
-    part1_key_framing(viewer, 10, 10)
+    viewer = SimpleViewer()
+
+    # part1_key_framing(viewer, 10, 10)
     # part1_key_framing(viewer, 10, 5)
     # part1_key_framing(viewer, 10, 20)
     # part1_key_framing(viewer, 10, 30)
     # part2_concatenate(viewer, between_frames=8, do_interp=False)
-    # part2_concatenate(viewer, between_frames=8)  
+    part2_concatenate(viewer, between_frames=8)
     viewer.run()
 
 
