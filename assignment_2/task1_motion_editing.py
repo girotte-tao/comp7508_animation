@@ -154,12 +154,13 @@ def concatenate_two_motions(motion1, motion2, last_frame_index, start_frame_indx
     '''
 
     ########## Code Start ############
-
+    # 1. Locating the search windows
     search_win1 = motion1.local_joint_rotations[last_frame_index - searching_frames:last_frame_index + searching_frames]
     search_win2 = motion2.local_joint_rotations[
                   max(0, start_frame_indx - searching_frames):start_frame_indx + searching_frames]
-
+    # 2. Calculating the similarity matrix
     diff = search_win1[:, np.newaxis, :, :] - search_win2[np.newaxis, :, :, :]
+    # 3. Determining the closest frames with real frame indices
     sim_matrix = np.linalg.norm(diff, axis=-1)
 
     min_idx = np.argmin(sim_matrix)
@@ -168,10 +169,10 @@ def concatenate_two_motions(motion1, motion2, last_frame_index, start_frame_indx
 
     real_i = last_frame_index - searching_frames + i
     real_j = max(0, start_frame_indx - searching_frames) + j
-
+    # 4. Shifting motion2 to motion1
     motion2.local_joint_positions = motion2.local_joint_positions - motion2.local_joint_positions[real_j] + \
                                     motion1.local_joint_positions[real_i]
-
+    # 5. Utilizing your task1 function for interpolation
     between_local_pos = interpolation(motion1.local_joint_positions[real_i], motion2.local_joint_positions[real_j],
                                       between_frames, 'linear')
     between_local_rot = interpolation(motion1.local_joint_rotations[real_i], motion2.local_joint_rotations[real_j],

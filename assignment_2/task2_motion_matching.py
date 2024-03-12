@@ -409,12 +409,15 @@ def main():
     viewer = SimpleViewer()
     controller = Controller(viewer)
     
-    selected_feature_names = ['trajectoryPos2D', 'trajectoryRot2D']
-    selected_feature_weights = [1, 1]
-    
+    # selected_feature_names = ['trajectoryPos2D', 'trajectoryRot2D']
+    # selected_feature_weights = [1, 1]
+    #
     # selected_feature_names = ['lFootPos', 'rFootPos']
     # selected_feature_weights = [1, 1]
-    
+    selected_feature_names = ['hipPos', 'hipRot', 'lFootPos', 'rFootPos', 'lHandPos', 'rHandPos', 'trajectoryPos2D',
+                              'trajectoryRot2D']
+    selected_feature_weights = [1, 1, 0.75, 0.75, 1, 1, 1, 1]
+
     assert len(selected_feature_names) == len(selected_feature_weights)
     
     character_controller = CharacterController(viewer, controller, selected_feature_names, selected_feature_weights)
