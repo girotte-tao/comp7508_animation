@@ -414,10 +414,45 @@ def main():
     #
     # selected_feature_names = ['lFootPos', 'rFootPos']
     # selected_feature_weights = [1, 1]
-    selected_feature_names = ['hipPos', 'hipRot', 'lFootPos', 'rFootPos', 'lHandPos', 'rHandPos', 'trajectoryPos2D',
-                              'trajectoryRot2D']
-    selected_feature_weights = [1, 1, 0.75, 0.75, 1, 1, 1, 1]
 
+    # case1 only using pos:
+    # selected_feature_names = ['hipPos', 'lFootPos', 'rFootPos', 'lHandPos', 'rHandPos']
+    # selected_feature_weights = [1, 1, 1, 1, 1]
+    # 有漂移现象，没有操作也会原地走路
+
+    # case2 using pos and trajectoryPos2D
+    # selected_feature_names = ['hipPos', 'lFootPos', 'rFootPos', 'lHandPos', 'rHandPos', 'trajectoryPos2D']
+    # selected_feature_weights = [1, 1, 1, 1, 1, 1]
+    # 双脚切换不协调
+
+    # case3 only using vel
+    # selected_feature_names = ['lFootVel', 'rFootVel', 'lHandVel', 'rHandVel', 'rHipVel', 'lHipVel', 'hipVel']
+    # selected_feature_weights = [1, 1, 1, 1, 1, 1, 1]
+    # 没有操作也会原地走路，改变方向会有漂移现象，没有操作也会原地走路
+
+
+    # case4 only using rot
+    # selected_feature_names = ['lFootRot', 'rFootRot', 'lHandRot', 'rHandRot', 'rHipRot', 'lHipRot', 'hipRot']
+    # selected_feature_weights = [1, 1, 1, 1, 1, 1, 1]
+    # 一开始往前走会没有动作，之后沿着一个方向走会出现预期外的动作，腿会改变移动方向
+
+    # case5 using rot and trajectoryRot2D
+    # selected_feature_names = ['lFootRot', 'rFootRot', 'lHandRot', 'rHandRot', 'rHipRot', 'lHipRot', 'hipRot', 'trajectoryRot2D']
+    # selected_feature_weights = [1, 1, 1, 1, 1, 1, 1, 1]
+    # 一开始往前走会没有动作，没有操作也会原地走路
+
+    # case6 using pos, hipRot and trajectoryPos2D
+    selected_feature_names = ['hipPos', 'hipRot', 'lFootPos', 'rFootPos', 'lHandPos', 'rHandPos', 'trajectoryPos2D']
+    selected_feature_weights = [1, 1, 0.75, 0.75, 1, 1, 1]
+    # 没有异常现象，满足需求
+
+    # selected_feature_names = ['lFootPos', 'rFootPos',
+    #                           'hipRot',
+    #                           'trajectoryPos2D', 'trajectoryRot2D']
+
+    # selected_feature_weights = [1, 1,
+    #                             1,
+    #                             1, 2]
     assert len(selected_feature_names) == len(selected_feature_weights)
     
     character_controller = CharacterController(viewer, controller, selected_feature_names, selected_feature_weights)
@@ -425,6 +460,35 @@ def main():
     viewer.addTask(task.update)
     viewer.run()
     pass
+
+
+feature_mapping = {
+    'lFootPos': 3,
+    'rFootPos': 3,
+    'lFootVel': 3,
+    'rFootVel': 3,
+    'lFootRot': 3,
+    'rFootRot': 3,
+    'lHandPos': 3,
+    'rHandPos': 3,
+    'lHandVel': 3,
+    'rHandVel': 3,
+    'lHandRot': 3,
+    'rHandRot': 3,
+    'rHipPos': 3,
+    'lHipPos': 3,
+    'rHipVel': 3,
+    'lHipVel': 3,
+    'rHipRot': 3,
+    'lHipRot': 3,
+    'hipPos': 3,
+    'hipRot': 3,
+    'hipVel': 3,
+    'trajectoryPos2D': 6,
+    'trajectoryRot2D': 6,
+    'lKneePos': 3,
+
+}
 
 
 if __name__ == '__main__':
