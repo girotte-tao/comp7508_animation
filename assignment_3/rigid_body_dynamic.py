@@ -226,8 +226,8 @@ vertices_list = [
 for i in range(len(vertices_list)):
     frame_vertices[i] = ti.Vector(vertices_list[i])
 
-window = ti.ui.Window("Rigid Body Simulation", (1024, 1024),
-                      vsync=True)
+window = ti.ui.Window("Rigid Body Simulation", (1024, 1024), fps_limit=60, vsync=False)
+
 canvas = window.get_canvas()
 canvas.set_background_color((1, 1, 1))
 scene = ti.ui.Scene()
