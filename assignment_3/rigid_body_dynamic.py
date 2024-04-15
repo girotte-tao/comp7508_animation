@@ -161,16 +161,37 @@ def substep():
             particle_force[i] += f_friction
         if particle_vertices[i][0] < -1:
             f_collision = collision_stiffness * (-1 - particle_vertices[i][0])
-            particle_force[i] += ti.Vector([f_collision, 0, 0])
+            normal_force = ti.Vector([f_collision, 0, 0])
+            particle_force[i] += normal_force
+            # Friction force
+            v_tangential = particle_velocities[i] - normal_force.normalized() * particle_velocities[i].dot(normal_force.normalized())
+            f_friction = -friction_stiffness * abs(f_collision) * v_tangential.normalized()
+            particle_force[i] += f_friction
+
         if particle_vertices[i][0] > 1:
             f_collision = collision_stiffness * (1 - particle_vertices[i][0])
-            particle_force[i] += ti.Vector([f_collision, 0, 0])
+            normal_force = ti.Vector([f_collision, 0, 0])
+            particle_force[i] += normal_force
+            # Friction force
+            v_tangential = particle_velocities[i] - normal_force.normalized() * particle_velocities[i].dot(normal_force.normalized())
+            f_friction = -friction_stiffness * abs(f_collision) * v_tangential.normalized()
+            particle_force[i] += f_friction
         if particle_vertices[i][2] < -1:
             f_collision = collision_stiffness * (-1 - particle_vertices[i][2])
-            particle_force[i] += ti.Vector([0, 0, f_collision])
+            normal_force = ti.Vector([0, 0, f_collision])
+            particle_force[i] += normal_force
+            # Friction force
+            v_tangential = particle_velocities[i] - normal_force.normalized() * particle_velocities[i].dot(normal_force.normalized())
+            f_friction = -friction_stiffness * abs(f_collision) * v_tangential.normalized()
+            particle_force[i] += f_friction
         if particle_vertices[i][2] > 1:
             f_collision = collision_stiffness * (1 - particle_vertices[i][2])
-            particle_force[i] += ti.Vector([0, 0, f_collision])
+            normal_force = ti.Vector([0, 0, f_collision])
+            particle_force[i] += normal_force
+            # Friction force
+            v_tangential = particle_velocities[i] - normal_force.normalized() * particle_velocities[i].dot(normal_force.normalized())
+            f_friction = -friction_stiffness * abs(f_collision) * v_tangential.normalized()
+            particle_force[i] += f_friction
 
     # computer the force for rigid body
     body_force = ti.Vector([0.0, 0.0, 0.0])
