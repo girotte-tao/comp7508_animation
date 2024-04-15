@@ -51,7 +51,7 @@ body_mass = ti.field(float, shape=())
 # Simulation parameters, feel free to change them
 # We assume all particles have the same mass
 particle_mass = 1
-initial_velocity = ti.Vector([0.0, 0.0, 0.0])
+initial_velocity = ti.Vector([3.0, 0.0, 0.0])
 initial_angular_velocity = ti.Vector([0.0, 0, 0.0])
 gravity = ti.Vector([0.0, -9.8, 0.0])
 # stiffness of the collision
@@ -152,7 +152,13 @@ def substep():
         # Collision force, we use a spring model to simulate the collision
         if particle_vertices[i][1] < -1:
             f_collision = collision_stiffness * (-1 - particle_vertices[i][1])
-            particle_force[i] += ti.Vector([0, f_collision, 0])
+            normal_force = ti.Vector([0, f_collision, 0])
+            particle_force[i] += normal_force
+
+            # Friction force
+            v_tangential = particle_velocities[i] - normal_force.normalized() * particle_velocities[i].dot(normal_force.normalized())
+            f_friction = -friction_stiffness * f_collision * v_tangential.normalized()
+            particle_force[i] += f_friction
         if particle_vertices[i][0] < -1:
             f_collision = collision_stiffness * (-1 - particle_vertices[i][0])
             particle_force[i] += ti.Vector([f_collision, 0, 0])
@@ -184,7 +190,12 @@ def substep():
         r = particle_vertices[i] - body_cm_position[None]
         body_torque += ti.math.cross(r, particle_force[i])
 
+    damping_force = -(velocity_damping_stiffness * body_velocity[None] * dt )
+    body_force += damping_force
 
+
+    # damping_torque = -velocity_damping_stiffness * body_angular_velocity[None] / body_mass[None]
+    # body_torque += damping_torque
     # update the rigid body
     # TODO 5: update the center of mass position and velocity
     body_velocity[None] += dt * body_force / body_mass[None]
